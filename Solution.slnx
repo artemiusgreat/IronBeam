@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Libs/IronBeamBroker.csproj" />
+  <Project Path="Demo/Demo.csproj" Id="d83cca3a-c5e6-468a-a13a-d8abe3ab1b04" />
+</Solution>
