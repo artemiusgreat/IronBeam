@@ -99,7 +99,7 @@ var orderRequest = new OrderRequest
 };
 
 var orderResponse = await client.PlaceOrderAsync(account, orderRequest);
-Console.WriteLine($"Order placed successfully. Status: {orderResponse.Status}, OrderId: {orderResponse.OrderId}");
+Console.WriteLine($"Order placed successfully. OrderId: {orderResponse.OrderId}");
 
 // ========================================================================
 // 9. Cancel the Order (Equivalent to OrderCancel) - COMMENTED OUT FOR SAFETY
