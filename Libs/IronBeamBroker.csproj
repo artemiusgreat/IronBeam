@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Flurl.Http" Version="4.0.2" />
+    <PackageReference Include="System.Interactive" Version="7.0.1" />
   </ItemGroup>
 
 </Project>

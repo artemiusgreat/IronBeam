@@ -1,4 +1,5 @@
-﻿using IronBeam;
+using IronBeam;
+using System.Text.Json;
 
 namespace Demo
 {
@@ -14,14 +15,14 @@ namespace Demo
     {
       // 1. Initialize the HttpClient and IronBeamClient
       // Best practice: Reuse a single HttpClient instance throughout your app's lifetime
-      var client = new IronBeamBroker();
+      var broker = new IronBeamBroker();
 
       // Optional: Override base URL if you need to point to a simulation environment
       // client.BaseUrl = "https://sim.ironbeamapi.com/v2";
 
       // 2. Authorize / Login (Equivalent to SignIn)
       Console.WriteLine("Authorizing...");
-      var loginResponse = await client.AuthorizeAsync(new AuthorizationRequest
+      var loginResponse = await broker.AuthorizeAsync(new AuthorizationRequest
       {
         Username = "your_username",
         Password = "your_password",
@@ -32,7 +33,7 @@ namespace Demo
       // 3. Get Trader Info (Equivalent to AccountSearch)
       Console.WriteLine("\nFetching trader info...");
       // Note: Replace "YOUR_TRADER_ID" with your actual Trader ID
-      var traderInfo = await client.GetTraderInfoAsync("YOUR_TRADER_ID");
+      var traderInfo = await broker.GetTraderInfoAsync("YOUR_TRADER_ID");
       Console.WriteLine($"Is Live: {traderInfo.IsLive}");
 
       var account = traderInfo.Accounts?.FirstOrDefault();
@@ -45,7 +46,7 @@ namespace Demo
 
       // 4. Get Symbols (Equivalent to ContractSearch)
       Console.WriteLine("\nFetching symbols for 'MES'...");
-      var symbolsResponse = await client.GetSymbolsAsync(text: "MES", limit: 10);
+      var symbolsResponse = await broker.GetSymbolsAsync(text: "MES", limit: 10);
       var symbol = symbolsResponse.Symbols?.FirstOrDefault();
       Console.WriteLine($"{symbolsResponse.Symbols?.Count ?? 0} symbol(s) found.");
 
@@ -56,7 +57,7 @@ namespace Demo
 
       // 5. Get Account Balance
       Console.WriteLine("\nFetching account balance...");
-      var balanceResponse = await client.AccountBalanceAsync(account, BalanceType.CURRENT_OPEN);
+      var balanceResponse = await broker.AccountBalanceAsync(account, BalanceType.CURRENT_OPEN);
       Console.WriteLine($"Balance Status: {balanceResponse.Status}");
       if (balanceResponse.Balances != null)
       {
@@ -68,12 +69,12 @@ namespace Demo
 
       // 6. Get Open Positions (Equivalent to PositionSearchOpen)
       Console.WriteLine("\nFetching open positions...");
-      var positionsResponse = await client.PositionsAsync(account);
+      var positionsResponse = await broker.PositionsAsync(account);
       Console.WriteLine($"{positionsResponse.Positions?.Count ?? 0} position(s) found.");
 
       // 7. Get Orders (Equivalent to OrderSearch)
       Console.WriteLine("\nFetching orders...");
-      var ordersResponse = await client.GetOrdersAsync(account, OrderStatusType.ANY);
+      var ordersResponse = await broker.GetOrdersAsync(account, OrderStatusType.ANY);
       Console.WriteLine($"{ordersResponse.Orders?.Count ?? 0} order(s) found.");
 
       // ========================================================================
@@ -107,10 +108,19 @@ namespace Demo
       }
       */
 
-      // 10. Logout (Equivalent to session invalidation)
-      Console.WriteLine("\nLogging out...");
-      var logoutResponse = await client.LogoutAsync();
-      Console.WriteLine($"Logout Status: {logoutResponse.Status}");
+      // Streaming
+
+      // 1. Assign your callbacks
+      broker.OnPrice = o => Console.WriteLine(JsonSerializer.Serialize(o));
+      broker.OnOrder = o => Console.WriteLine(JsonSerializer.Serialize(o));
+      broker.OnError = o => Console.WriteLine(JsonSerializer.Serialize(o));
+
+      // 2. Get a Stream ID and Connect
+      var streamIdResponse = await broker.GetStreamIdAsync();
+      await broker.SubscribeQuotesAsync(streamIdResponse.StreamId, ["XCME:ES.Z23"]);
+
+      // 3. Start listening
+      await broker.Connect($"{streamIdResponse.StreamId}");
     }
   }
 }
